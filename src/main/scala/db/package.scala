@@ -14,5 +14,4 @@ package object db {
 
   val zioDS: ULayer[HikariDataSource] = ZLayer.succeed(hikariDS)
 
-
 }

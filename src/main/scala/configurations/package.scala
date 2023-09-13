@@ -1,27 +1,45 @@
-import configurations.common._
 import zio._
-import zio.config.magnolia.deriveConfig
+import zio.config.ReadError.SourceError
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config._
+import zio.config.typesafe.TypesafeConfig
 
 package object configurations {
 
-  final case class AppConfig(jdbc: JDBCConfig)
+//  trait AppConfig
 
-  object commons {
+  case class AppConfig(jdbc: JDBCConfig, liquibase: LiquibaseConfig)
 
-    def jdbc: Config[JDBCConfig] = deriveConfig[JDBCConfig].nested("db")
+  case class JDBCConfig(host: String, user: String, password: String, driver: String)
+  case class LiquibaseConfig(changeLogPath: String) extends AnyVal
+
+  type JDBCConfiguration = Has[JDBCConfig]
+  type LiquibaseConfiguration = Has[LiquibaseConfig]
+
+  object applicationConf {
+
+
+    val jdbc: ConfigDescriptor[JDBCConfig] = descriptor[JDBCConfig]
+
+    val liquibase: ConfigDescriptor[LiquibaseConfig] = descriptor[LiquibaseConfig]
 
   }
 
-  object Configuration {
-    val live: ULayer[Config[AppConfig]] = ZLayer.fromZIO {
+  import applicationConf._
 
-      val appConfig = for {
-        jdbc <- commons.jdbc
-      } yield AppConfig(jdbc)
+  object ConfigurationLive {
 
-      ZIO.succeed(appConfig)
-    }
+    val liveJdbcConfig: Layer[ReadError[String], JDBCConfiguration] = TypesafeConfig.fromDefaultLoader(applicationConf.jdbc)
+
+    val liveLiquibaseConfig: Layer[ReadError[String], LiquibaseConfiguration] = TypesafeConfig.fromDefaultLoader(applicationConf.liquibase)
+
   }
+
+  def loadJDBCConfig: Task[JDBCConfiguration] =
+    ZIO.accessM[JDBCConfiguration](ZIO.effect).provideLayer(ConfigurationLive.liveJdbcConfig)
+
+  def loadLiquibseConfig: Task[LiquibaseConfiguration] =
+    ZIO.accessM[LiquibaseConfiguration](ZIO.effect).provideLayer(ConfigurationLive.liveLiquibaseConfig)
 
 
 }

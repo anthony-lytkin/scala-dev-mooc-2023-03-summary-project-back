@@ -1,5 +1,5 @@
 import configurations._
-import configurations.common.{JDBCConfig, LiquibaseConfig}
+import configurations.common.JDBCConfig
 import zio.{Layer, Scope, ZEnvironment, ZIO, ZLayer}
 import zio.config.ReadError
 

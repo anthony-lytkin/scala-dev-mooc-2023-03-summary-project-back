@@ -1,43 +1,42 @@
 package db
 
-import configurations.common.{JDBCConfig, LiquibaseConfig}
+import configurations.LiquibaseConfig
 import liquibase.Liquibase
 import liquibase.database.jvm.JdbcConnection
-import liquibase.resource.{ClassLoaderResourceAccessor, CompositeResourceAccessor, DirectoryResourceAccessor}
+import liquibase.resource.{ClassLoaderResourceAccessor, CompositeResourceAccessor, FileSystemResourceAccessor}
 import zio._
-import zio.managed.ZManaged
 
-import java.io.File
 import javax.sql.DataSource
 
-object lique {
+object Liquibase {
+
+  type Liqui = Has[Liquibase]
+
+  type LiquibaseService = Has[LiquiImpl]
 
   trait Service {
-
-    def migrate: RIO[Liquibase, Unit]
+    def migrate: RIO[Liqui, Unit]
   }
 
-  class LiqueService extends Service {
-    override def migrate: RIO[Liquibase, Unit] = liquibase.map(_.update())
+  class LiquiImpl extends Service {
+    override def migrate: RIO[Liqui, Unit] = liquibase.map(_.update(""))
   }
 
-  private def liquibase: URIO[Liquibase, Liquibase] = ZIO.service[Liquibase]
+  private def liquibase: URIO[Has[Liquibase], Liquibase] = ZIO.service[Liquibase]
 
-  def createLique(config: LiquibaseConfig): ZManaged[DataSource, Throwable, Liquibase] = for {
-    ds <- ZManaged.fromZIO(ZIO.environment[DataSource].map(_.get))
-    fileAccessor <- ZManaged.fromZIO(ZIO.attempt(new DirectoryResourceAccessor(new File(""))))
-    classLoader <- ZManaged.fromZIO(ZIO.attempt(classOf[Tag[Service]].getClassLoader))
-    classLoaderAccessor <- ZManaged.fromZIO(ZIO.attempt(new ClassLoaderResourceAccessor(classLoader)))
-    fileOpener <- ZManaged.fromZIO(ZIO.attempt(new CompositeResourceAccessor(fileAccessor, classLoaderAccessor)))
-    conn <- ZManaged.acquireReleaseAttemptWith(new JdbcConnection(ds.getConnection()))(c => c.close())
-    lique <- ZManaged.fromZIO(ZIO.attempt(new Liquibase(config.changeLog, fileOpener, conn)))
-  } yield lique
+  def initLiquibase(lqConfig: LiquibaseConfig): ZManaged[DataSource, Throwable, Liquibase] = for {
+    ds <- ZIO.environment[DataSource].toManaged_
+    fileAccessor <- ZIO.effect(new FileSystemResourceAccessor()).toManaged_
+    classLoader <- ZIO.effect(classOf[LiquibaseService].getClassLoader).toManaged_
+    classLoaderAccessor <- ZIO.effect(new ClassLoaderResourceAccessor(classLoader)).toManaged_
+    fileOpener <- ZIO.effect(new CompositeResourceAccessor(fileAccessor, classLoaderAccessor)).toManaged_
+    conn <- ZManaged.makeEffect(new JdbcConnection(ds.getConnection))(c => c.close())
+    liqui <- ZIO.effect(new Liquibase(lqConfig.changeLogPath, fileOpener, conn)).toManaged_
+  } yield liqui
 
-  val liquibaseLayer = for {
-    config <- configurations.
-  }
+  val liquibaseLayer: ZLayer[DataSource, Throwable, Liqui] =
+    ZLayer.fromManaged(configurations.loadLiquibseConfig.toManaged_.flatMap(cfg => initLiquibase(cfg.get)))
 
-  val live: ULayer[LiqueService] = ZLayer.succeed(new LiqueService)
-
+  val live: ULayer[LiquibaseService] = ZLayer.succeed(new LiquiImpl)
 
 }
