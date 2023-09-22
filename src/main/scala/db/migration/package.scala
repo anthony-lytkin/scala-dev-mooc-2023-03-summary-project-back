@@ -8,35 +8,40 @@ import zio._
 
 import javax.sql.DataSource
 
-object Liquibase {
+package object migration {
 
   type Liqui = Has[Liquibase]
 
-  type LiquibaseService = Has[LiquiImpl]
+  type MigrationService = Has[Service]
 
   trait Service {
     def migrate: RIO[Liqui, Unit]
   }
 
-  class LiquiImpl extends Service {
-    override def migrate: RIO[Liqui, Unit] = liquibase.map(_.update(""))
+  object Service {
+    val live: Service = new Service {
+      override def migrate: RIO[Liqui, Unit] = liquibase.map(_.update(""))
+    }
   }
-
-  private def liquibase: URIO[Has[Liquibase], Liquibase] = ZIO.service[Liquibase]
 
   def initLiquibase(lqConfig: LiquibaseConfig): ZManaged[DataSource, Throwable, Liquibase] = for {
     ds <- ZIO.environment[DataSource].toManaged_
     fileAccessor <- ZIO.effect(new FileSystemResourceAccessor()).toManaged_
-    classLoader <- ZIO.effect(classOf[LiquibaseService].getClassLoader).toManaged_
+    classLoader <- ZIO.effect(classOf[MigrationService].getClassLoader).toManaged_
     classLoaderAccessor <- ZIO.effect(new ClassLoaderResourceAccessor(classLoader)).toManaged_
     fileOpener <- ZIO.effect(new CompositeResourceAccessor(fileAccessor, classLoaderAccessor)).toManaged_
     conn <- ZManaged.makeEffect(new JdbcConnection(ds.getConnection))(c => c.close())
-    liqui <- ZIO.effect(new Liquibase(lqConfig.changeLogPath, fileOpener, conn)).toManaged_
+    liqui <- ZIO.effect(new Liquibase(lqConfig.changeLog, fileOpener, conn)).toManaged_
   } yield liqui
 
-  val liquibaseLayer: ZLayer[DataSource, Throwable, Liqui] =
-    ZLayer.fromManaged(configurations.loadLiquibseConfig.toManaged_.flatMap(cfg => initLiquibase(cfg.get)))
+  val live: ZLayer[DataSource, Throwable, Liqui] =
+    ZLayer.fromManaged(configurations.getConfig.toManaged_.flatMap(cfg => initLiquibase(cfg.get.liquibase)))
 
-  val live: ULayer[LiquibaseService] = ZLayer.succeed(new LiquiImpl)
+//  val migrationLive: ULayer[MigrationService] = ZLayer.succeed(Service.live)
+
+  def liquibase: URIO[Liqui, Liquibase] = ZIO.service[Liquibase]
+
+  def migrate: RIO[Liqui, Unit] = Service.live.migrate
+
 
 }

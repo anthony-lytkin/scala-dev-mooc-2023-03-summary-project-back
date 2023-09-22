@@ -10,10 +10,11 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies ++= zio
-libraryDependencies += zioHTTP
+libraryDependencies +=  zioHTTP
 libraryDependencies ++= zioConfig
+libraryDependencies ++= slf4j
 libraryDependencies ++= circe
 libraryDependencies ++= quill
-libraryDependencies += postgres
-libraryDependencies += liquibase
+libraryDependencies +=  postgres
+libraryDependencies +=  liquibase
 libraryDependencies ++= testContainers
