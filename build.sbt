@@ -1,25 +1,20 @@
-ThisBuild / version := "0.1.0"
+import Dependencies._
+
+ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.8"
 
 lazy val root = (project in file("."))
   .settings(
-    organization := "Otus",
-    name := "Booking meeting room",
+    name := "Booking meeting room"
   )
 
-// zio
-libraryDependencies ++= Dependencies.zio
-libraryDependencies ++= Dependencies.zioConfig
-libraryDependencies +=  Dependencies.zioHTTP
-libraryDependencies ++= Dependencies.quill
-
-// circe json
-libraryDependencies ++= Dependencies.circe
-
-// db
-libraryDependencies += Dependencies.postgres
-libraryDependencies += Dependencies.liquebase
-
-// test
-libraryDependencies ++= Dependencies.testContainers
+libraryDependencies ++= zio
+libraryDependencies +=  zioHTTP
+libraryDependencies ++= zioConfig
+libraryDependencies ++= slf4j
+libraryDependencies ++= circe
+libraryDependencies ++= quill
+libraryDependencies +=  postgres
+libraryDependencies +=  liquibase
+libraryDependencies ++= testContainers

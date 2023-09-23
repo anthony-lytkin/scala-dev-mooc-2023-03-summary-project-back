@@ -1,0 +1,33 @@
+import api.{AuthApi, BookingApi, CommonApi}
+import dao.repositories._
+import db.DataSource
+import services.AuthService.AuthService
+import services.BookingService.BookingService
+import services._
+import zhttp.http.{Http, Request, Response}
+import zio._
+
+
+object Application {
+
+  val authApiLayer: ZLayer[Any, Throwable, AuthService with DataSource] =
+    (UserRepository.live >>> AuthService.live) >+> db.live
+
+  val bookingApiLayer: ZLayer[Any, Throwable, BookingService with DataSource] =
+    (BookingRepository.live >>> BookingService.live) >+> db.live
+
+  type ApiEnv = DataSource with AuthService with BookingService
+
+  val layer: ZLayer[Any, Throwable, ApiEnv] =
+    (BookingRepository.live >>> BookingService.live) ++ (UserRepository.live >>> AuthService.live) >+> db.live
+
+  val api: Http[ApiEnv, Nothing, Request, Response] = CommonApi.api ++ (AuthApi.api ++ BookingApi.api)
+
+  val server: ZIO[ApiEnv, Throwable, Nothing] = for {
+    serverConfig <- configurations.getConfig
+    server <- zhttp.service.Server.start(serverConfig.get.server.port, api)
+  } yield server
+
+  val start: ZIO[Any, Throwable, Nothing] = server.provideLayer(layer)
+
+}

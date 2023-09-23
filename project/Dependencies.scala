@@ -2,14 +2,21 @@ import sbt._
 
 object Dependencies {
 
-  //// VERSIONS ////
-  lazy val zioVersion       = "2.0.16"
-  lazy val zioConfigVersion = "3.0.7"
-  lazy val zioHttpVersion   = "1.0.0.0-RC27"
-  lazy val circeVersion     = "0.14.1"
+  object versions {
 
-  //// TESTS LIBS VERSIONS ////
-  lazy val scalaTestContainersVersions = "0.40.12"
+    lazy val zioVersion = "1.0.4"
+    lazy val zioConfigVersion = "1.0.5"
+    lazy val zioHttpVersion = "1.0.0.0-RC27"
+    lazy val circeVersion = "0.14.1"
+
+    lazy val slf4jVersion = "1.7.36"
+    lazy val log4jVersion = "2.17.1"
+
+    lazy val scalaTestContainersVersions = "0.40.12"
+  }
+
+
+  import versions._
 
   lazy val zio = Seq(
     "dev.zio" %% "zio"          % zioVersion,
@@ -26,6 +33,16 @@ object Dependencies {
     "dev.zio" %% "zio-config-typesafe" % zioConfigVersion
   )
 
+  lazy val slf4j = Seq(
+    "org.slf4j" % "slf4j-api"     % slf4jVersion,
+    "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
+    "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
+    "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
+
+//    "org.slf4j" % "slf4j-simple" % slf4jVersion
+  )
+
+
   lazy val circe = Seq(
     "io.circe" %% "circe-core"       % circeVersion,
     "io.circe" %% "circe-generic"    % circeVersion,
@@ -35,12 +52,12 @@ object Dependencies {
   )
 
   lazy val quill = Seq(
-    "io.getquill" %% "quill-jdbc-zio" % "4.6.0",
+    "io.getquill" %% "quill-jdbc-zio" % "3.12.0",
     "io.github.kitlangton" %% "zio-magic" % "0.3.12"
   )
 
   lazy val postgres = "org.postgresql" % "postgresql" % "42.5.4"
-  lazy val liquebase = "org.liquibase" % "liquibase-core" % "4.20.0"
+  lazy val liquibase = "org.liquibase" % "liquibase-core" % "3.4.2"
 
 
   lazy val testContainers = Seq(
