@@ -1,5 +1,4 @@
 import api.{AuthApi, BookingApi, CommonApi}
-import dao.repositories.BookingRepository.BookingRepo
 import dao.repositories._
 import db.DataSource
 import services.AuthService.AuthService
@@ -11,20 +10,20 @@ import zio._
 
 object Application {
 
-//  type BookingAppEnv = UserRepo with AuthService with BookingRepo with BookingService
-  type BookingApiEnv = BookingService with DataSource
+  val authApiLayer: ZLayer[Any, Throwable, AuthService with DataSource] =
+    (UserRepository.live >>> AuthService.live) >+> db.live
 
-//  val appLayer: ZLayer[Any, Nothing, UserRepo with AuthService with BookingRepo with BookingService] =
-//    UserRepository.live >+> AuthService.live ++ (BookingRepository.live >+> BookingService.live)
-
-  val layer: ZLayer[Any, Throwable, BookingService with DataSource] =
+  val bookingApiLayer: ZLayer[Any, Throwable, BookingService with DataSource] =
     (BookingRepository.live >>> BookingService.live) >+> db.live
-//  (UserRepository.live >>> AuthService.live)
 
-  val api: Http[DataSource with BookingService, Nothing, Request, Response] = CommonApi.api ++ BookingApi.api
-//  ++ AuthApi.api // todo Добавить AuthApi
+  type ApiEnv = DataSource with AuthService with BookingService
 
-  val server: ZIO[BookingApiEnv, Throwable, Nothing] = for {
+  val layer: ZLayer[Any, Throwable, ApiEnv] =
+    (BookingRepository.live >>> BookingService.live) ++ (UserRepository.live >>> AuthService.live) >+> db.live
+
+  val api: Http[ApiEnv, Nothing, Request, Response] = CommonApi.api ++ (AuthApi.api ++ BookingApi.api)
+
+  val server: ZIO[ApiEnv, Throwable, Nothing] = for {
     serverConfig <- configurations.getConfig
     server <- zhttp.service.Server.start(serverConfig.get.server.port, api)
   } yield server

@@ -12,7 +12,7 @@ import zhttp.http._
 
 object BookingApi {
 
-  type ApiEnv = DataSource with BookingService
+  private type BookingApiEnv = DataSource with BookingService
 
   val api = Http.collectZIO[Request] {
     case Method.GET -> !! / API / V1 / "department" / id / "rooms" =>
@@ -23,8 +23,8 @@ object BookingApi {
       okWithJsonObject(BookingService.service.flatMap(_.meetingRoomBookingDetails(id, urlParamToLong(startTime), urlParamToLong(endTime))))
 
     case req @ Method.POST -> !! / API / V1 / "user" / id / "bookRoom" =>
-      okWithRequestResponseObject[ApiEnv, CreateBookingDTO, UserBookingDTO](req)(parsedReq => BookingService.service.flatMap(_.bookRoom(id, parsedReq)))
-    case req @ Method.DELETE -> !! / API / V1 / "booking" / id =>
+      okWithRequestResponseObject[BookingApiEnv, CreateBookingDTO, UserBookingDTO](req)(parsedReq => BookingService.service.flatMap(_.bookRoom(id, parsedReq)))
+    case Method.DELETE -> !! / API / V1 / "booking" / id =>
       ok(BookingService.service.flatMap(_.cancelBooking(id)))
 
 

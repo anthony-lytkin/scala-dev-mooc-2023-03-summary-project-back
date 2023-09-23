@@ -1,4 +1,3 @@
-import db.DataSource
 import dto._
 import dto.errors.ErrorDTO
 import exceptions._
@@ -8,7 +7,6 @@ import zhttp.http._
 import zio._
 
 import scala.language.implicitConversions
-import scala.reflect.runtime.universe.Try
 
 package object api {
 
