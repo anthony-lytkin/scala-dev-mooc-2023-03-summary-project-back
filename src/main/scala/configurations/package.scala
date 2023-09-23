@@ -1,9 +1,7 @@
 import zio._
-import zio.config.ReadError.SourceError
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config._
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfig
-import zio.macros.accessible
 
 package object configurations {
 

@@ -1,12 +1,11 @@
 package api
 
 import api.responses._
-import dao.entities._
 import db.DataSource
 import dto.requests.CreateBookingDTO
-import dto.responses.{BookingRoomDetailsDTO, MeetingRoomDTO, UserBookingDTO}
+import dto.responses.UserBookingDTO
 import services.BookingService
-import services.BookingService.{BookingService, service}
+import services.BookingService.BookingService
 import utils.RequestUtils._
 import zhttp.http._
 
