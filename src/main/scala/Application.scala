@@ -1,4 +1,4 @@
-import api.{AuthApi, BookingApi, CommonApi}
+import api._
 import dao.repositories._
 import db.DataSource
 import services.AuthService.AuthService
@@ -6,6 +6,7 @@ import services.BookingService.BookingService
 import services._
 import zhttp.http.{Http, Request, Response}
 import zio._
+import zio.logging._
 
 
 object Application {
@@ -15,6 +16,8 @@ object Application {
 
   val bookingApiLayer: ZLayer[Any, Throwable, BookingService with DataSource] =
     (BookingRepository.live >>> BookingService.live) >+> db.live
+
+  val loggingLayer: ZLayer[Logging, Nothing, Logging] = Logging.any >>> Logging.withRootLoggerName("booking-room-service")
 
   type ApiEnv = DataSource with AuthService with BookingService
 

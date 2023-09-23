@@ -1,7 +1,5 @@
 package exceptions
 
-import zio.CanFail
-
 trait BRException extends Throwable
 
 class BRCommonException(message: String, cause: Option[Throwable]) extends java.lang.Exception(message, cause.orNull) with BRException {
@@ -14,7 +12,7 @@ class BRCommonException(message: String, cause: Option[Throwable]) extends java.
 
 class BRNotFoundException(message: String) extends BRCommonException(message) with BRException
 
-class BRBadRequestException(message: String, cause: Option[Throwable])(implicit canFail: CanFail[BRBadRequestException]) extends BRCommonException(message, cause) with BRException {
+class BRBadRequestException(message: String, cause: Option[Throwable]) extends BRCommonException(message, cause) with BRException {
 
   def this(message: String) = this(message, None)
 

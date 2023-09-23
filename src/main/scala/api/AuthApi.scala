@@ -1,7 +1,6 @@
 package api
 
 import api.responses._
-import dao.entities.UserLogin
 import db.DataSource
 import dto.requests.UserAuthDTO
 import dto.responses.UserDTO

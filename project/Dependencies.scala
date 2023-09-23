@@ -34,11 +34,9 @@ object Dependencies {
   )
 
   lazy val slf4j = Seq(
-    "org.slf4j" % "slf4j-api"     % slf4jVersion,
-    "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
-    "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
-    "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
-
+    "org.slf4j" % "slf4j-reload4j" % slf4jVersion
+    //    "dev.zio" %% "zio-logging" % "0.5.16",
+//    "dev.zio" %% "zio-logging-slf4j" % "0.5.16"
 //    "org.slf4j" % "slf4j-simple" % slf4jVersion
   )
 
