@@ -6,4 +6,6 @@ case class Booking(id: String, bookedByUser: String, roomId: String, startTime: 
 
   def bookingId: BookingId = BookingId(id)
 
+  endTime
+
 }

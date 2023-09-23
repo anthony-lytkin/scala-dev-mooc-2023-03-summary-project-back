@@ -1,14 +1,16 @@
 package utils
 
-import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
+import java.time._
+import scala.language.implicitConversions
 
 object CommonUtils {
 
-  object dateConverters {
-    implicit val localDateTime2Long: LocalDateTime => Long = (dt: LocalDateTime) => {
-      val zonedDt = ZonedDateTime.of(dt, ZoneId.systemDefault())
-      zonedDt.toInstant.toEpochMilli
-    }
+  object dateConvertersImplicit {
+
+    implicit def localDateTime2Long(dt: LocalDateTime): Long = ZonedDateTime.of(dt, ZoneId.systemDefault()).toInstant.toEpochMilli
+
+    implicit def long2LocalDateTime(l: Long): LocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(l), ZoneId.systemDefault())
+
   }
 
 }

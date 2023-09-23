@@ -15,7 +15,7 @@ object UserRepository {
   trait Service {
     def findEmail(login: UserLogin): QIO[Option[UserEmail]]
 
-    def getUserInfo(userId: UserId): QIO[Option[(User, Department)]]
+    def findUserInfo(userId: UserId): QIO[Option[(User, Department)]]
   }
 
   class UserRepositoryImpl extends Service {
@@ -23,13 +23,11 @@ object UserRepository {
     override def findEmail(login: UserLogin): QIO[Option[UserEmail]] =
       run(userAccountSchema.filter(_.email == lift(login.login))).map(_.headOption)
 
-    override def getUserInfo(userId: UserId): QIO[Option[(User, Department)]] = run {
+    override def findUserInfo(userId: UserId): QIO[Option[(User, Department)]] = run {
       for {
         user <- userSchema.filter(_.id == lift(userId.id))
         department <- departmentSchema.join(_.id == user.departmentId)
-      } yield {
-        (user, department)
-      }
+      } yield (user, department)
     }.map(_.headOption)
 
   }

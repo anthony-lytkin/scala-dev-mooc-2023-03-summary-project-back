@@ -1,4 +1,4 @@
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import com.zaxxer.hikari._
 import io.getquill._
 import io.getquill.context.ZioJdbc
 import zio._
@@ -35,7 +35,7 @@ package object db {
 
 //  val live: ZLayer[Any, Throwable, DataSource] = ZioJdbc.DataSourceLayer.fromDataSource(hikari.hikariDS)
 
-  val live: ULayer[DataSource] =
-    ZLayer.fromManaged(hikari.hikariDs).flatMap(hikari => ZioJdbc.DataSourceLayer.fromDataSource(hikari.get)).orDie
+  val live: TaskLayer[DataSource] =
+    ZLayer.fromManaged(hikari.hikariDs).flatMap(hikari => ZioJdbc.DataSourceLayer.fromDataSource(hikari.get))
 
 }
