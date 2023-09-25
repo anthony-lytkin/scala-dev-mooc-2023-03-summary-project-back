@@ -4,7 +4,8 @@ import db.DataSource
 import services.AuthService.AuthService
 import services.BookingService.BookingService
 import services._
-import zhttp.http.{Http, Request, Response}
+import zhttp.http
+import zhttp.http.{Http, Middleware, Request, Response}
 import zio._
 import zio.logging._
 
@@ -28,7 +29,7 @@ object Application {
 
   val server: ZIO[ApiEnv, Throwable, Nothing] = for {
     serverConfig <- configurations.getConfig
-    server <- zhttp.service.Server.start(serverConfig.get.server.port, api)
+    server <- zhttp.service.Server.start(serverConfig.get.server.port, api @@ Middleware.cors(cors.config))
   } yield server
 
   val start: ZIO[Any, Throwable, Nothing] = server.provideLayer(layer)

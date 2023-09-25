@@ -6,7 +6,7 @@ import io.circe.Encoder
 import io.circe.derivation.deriveEncoder
 import vo.BookingVO
 
-case class BookingRoomDetailsDTO(id: String, name: String, floor: String, personMumber: Int, bookings: List[BookingVO]) extends ResponseDTO
+case class BookingRoomDetailsDTO(id: String, name: String, floor: String, personNumber: Int, bookings: List[BookingVO]) extends ResponseDTO
 
 object BookingRoomDetailsDTO {
 

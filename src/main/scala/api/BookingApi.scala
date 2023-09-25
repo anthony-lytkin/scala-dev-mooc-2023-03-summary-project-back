@@ -25,8 +25,6 @@ object BookingApi {
       okWithRequestResponseObject[BookingApiEnv, CreateBookingDTO, UserBookingDTO](req)(parsedReq => BookingService.service.flatMap(_.bookRoom(id, parsedReq)))
     case Method.DELETE -> !! / API / V1 / "booking" / id =>
       ok(BookingService.service.flatMap(_.cancelBooking(id)))
-
-
   }
 
 }
