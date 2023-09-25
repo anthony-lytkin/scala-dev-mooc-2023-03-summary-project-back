@@ -26,7 +26,7 @@ object BookingVO {
   def apply(booking: Booking, user: User): BookingVO = BookingVO(
     booking.roomId,
     Some(booking.id),
-    Some(s"${user.lastName} ${user.firstName} ${user.middleName}"),
+    Some(s"${user.lastName} ${user.firstName} ${user.middleName.getOrElse("")}"),
     Some(user.id),
     booking.startTime,
     booking.endTime
