@@ -27,8 +27,8 @@ object AuthService {
       email <- succeedOrNotFound(userRepo.findEmail(UserLogin(request.login)))(s"Пользователь ${request.login} не найден")
       userWithDep <- succeedOrNotFound(userRepo.findUserInfo(UserId(email.userId)))(s"Пользователь ${request.login} не найден")
       _ <- logger.flatMap(_.info(s"User with login ${request.login} has authorized. User id = ${userWithDep._1.id}."))
-      _ <- logger.flatMap(_.debug(s"Result: $userWithDep"))
       dto <- ZIO.succeed(UserDTO(userWithDep._1, email, userWithDep._2))
+      _ <- logger.flatMap(_.debug(s"Result: $dto"))
     } yield dto
   }
 

@@ -2,8 +2,9 @@ import dto._
 import dto.errors.ErrorDTO
 import exceptions._
 import io.circe.syntax.EncoderOps
-import io.circe.{Decoder, Encoder, jawn}
+import io.circe.{Decoder, Encoder}
 import zhttp.http._
+import zhttp.http.middleware.Cors.CorsConfig
 import zio._
 
 import scala.language.implicitConversions
@@ -12,6 +13,17 @@ package object api {
 
   val API = "api"
   val V1 = "v1"
+  val LOCALHOST = "localhost"
+
+  object cors {
+    val config: CorsConfig =
+      CorsConfig(
+        anyOrigin = true,
+        anyMethod = true,
+        allowedOrigins = s => s.equals(LOCALHOST),
+        allowedMethods = Some(Set(Method.GET, Method.POST))
+      )
+  }
 
   private[api] object responses {
 
@@ -48,7 +60,7 @@ package object api {
       handleResultObject(effect)
 
     def okWithRequestResponseObject[R, B <: RequestDTO, T <: ResponseDTO](requested: Request)(effect: B => ZIO[R, BRException, T])
-                                                                         (implicit encoder: Encoder[T], decoder: Decoder[B]): URIO[R, Response] = {
+                                                                         (implicit encoderT: Encoder[T], decoder: Decoder[B], encoderB: Encoder[B]): URIO[R, Response] = {
       request.parseRequest(requested).foldM(
         e => ZIO.environment[R] zipRight handleRequestError(e),
         b => handleResultObject(effect(b))
@@ -62,11 +74,10 @@ package object api {
 
   object request {
 
-    def parseRequest[A <: RequestDTO](request: Request)(implicit decoder: Decoder[A]): ZIO[Any, BRBadRequestException, A] = {
+    def parseRequest[A <: RequestDTO](request: Request)(implicit decoder: Decoder[A], encoder: Encoder[A]): ZIO[Any, BRBadRequestException, A] = {
       val dto: ZIO[Any, Throwable, A] = for {
         body <- request.body
-        json <- ZIO.fromEither(jawn.parse(body.toString()))
-        dto <- ZIO.fromEither(decoder.decodeJson(json))
+        dto <- ZIO.fromEither(decoder.decodeJson(body.asJson))
       } yield dto
       dto.foldM(e => ZIO.fail(new BRBadRequestException(e)), ZIO.succeed(_))
     }
@@ -75,10 +86,8 @@ package object api {
 }
 
 //val config: CorsConfig =
-//  CorsConfig(
-//    allowedOrigin = {
-//      case origin@Origin.Value(_, host, _) if host == "localhost" =>
-//        Some(AccessControlAllowOrigin.Specific(origin))
+//  CorsConfig(allowedOrigins =
+//      case origin @ Origin.Value(_, host, _) if host == "localhost" => Some(AccessController..Specific(origin))
 //      case _ => None
 //    },
 //  )

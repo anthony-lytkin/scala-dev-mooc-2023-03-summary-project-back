@@ -38,15 +38,15 @@ object BookingService {
     override def getRoomInfo(depId: String): ZIO[DataSource, BRException, List[MeetingRoomDTO]] = for {
       _ <- logger.flatMap(_.debug(s"Trying to get rooms for department with id $depId"))
       rooms <- succeedOrException(bookingRepo.listMeetingRoomsByDepartment(DepartmentId(depId)))
-      _ <- logger.flatMap(_.debug(s"Result $rooms"))
       dto <- ZIO.succeed(rooms.map(MeetingRoomDTO.apply))
+      _ <- logger.flatMap(_.debug(s"Result $dto"))
     } yield dto
 
     override def bookingsByUser(userId: String): ZIO[DataSource, BRException, List[UserBookingDTO]] = for {
       _ <- logger.flatMap(_.debug(s"Trying to get user's bookings for user with id $userId"))
       bookings <- succeedOrException(bookingRepo.findBookingsByUser(UserId(userId)))
-      _ <- logger.flatMap(_.debug(s"Result $bookings"))
       dto <- ZIO.succeed(bookings.map(UserBookingDTO.apply))
+      _ <- logger.flatMap(_.debug(s"Result $dto"))
     } yield dto
 
     override def meetingRoomBookingDetails(roomId: String, startTime: Long, endTime: Long): ZIO[DataSource, BRException, BookingRoomDetailsDTO] = for {
@@ -56,8 +56,8 @@ object BookingService {
       bookingsVO <- for {
         vo <- ZIO.succeed(bookings.map(b => BookingVO(b._1, b._2)))
       } yield vo
-      _ <- logger.flatMap(_.debug(s"Result: $room $bookingsVO"))
       dto <- ZIO.succeed(BookingRoomDetailsDTO.apply(room, bookingsVO))
+      _ <- logger.flatMap(_.debug(s"Result: $dto"))
     } yield dto
 
     override def bookRoom(userId: String, request: CreateBookingDTO): ZIO[DataSource, BRException, UserBookingDTO] = for {
@@ -79,8 +79,8 @@ object BookingService {
       bookingWithRoom <- succeedOptOrSpecificException(bookingRepo.findBooking(BookingId(newBooking.id))) {
         new BRCommonException("Произошла непредвиденная ошибка при бронировании. Попробуйте забронировать комнату позже.")
       }
-      _ <- logger.flatMap(_.debug(s"Result: $bookingWithRoom"))
       dto <- ZIO.succeed(UserBookingDTO.apply(bookingWithRoom._1, bookingWithRoom._2))
+      _ <- logger.flatMap(_.debug(s"Result: $dto"))
     } yield dto
 
     override def cancelBooking(bookingId: String): ZIO[DataSource, BRException, Unit] = for {
