@@ -18,3 +18,4 @@ libraryDependencies ++= quill
 libraryDependencies +=  postgres
 libraryDependencies +=  liquibase
 libraryDependencies ++= testContainers
+libraryDependencies += "io.spray" %% "spray-json" % "1.3.6"

@@ -1,8 +1,9 @@
 import dto._
 import dto.errors.ErrorDTO
 import exceptions._
+import io.circe.Encoder
 import io.circe.syntax.EncoderOps
-import io.circe.{Decoder, Encoder}
+import spray.json.JsonReader
 import zhttp.http._
 import zhttp.http.middleware.Cors.CorsConfig
 import zio._
@@ -21,7 +22,7 @@ package object api {
         anyOrigin = true,
         anyMethod = true,
         allowedOrigins = s => s.equals(LOCALHOST),
-        allowedMethods = Some(Set(Method.GET, Method.POST))
+        allowedMethods = Some(Set(Method.GET, Method.POST, Method.DELETE))
       )
   }
 
@@ -50,17 +51,17 @@ package object api {
     private def handleResultArray[R, E <: BRException, A <: ResponseDTO](effect: ZIO[R, E, Seq[A]])(implicit encoder: Encoder[A]): URIO[R, Response] =
       effect.foldM(handleRequestError, a => ZIO.succeed(Response.json(a.asJson.toString())))
 
-    def ok[R](effect: => ZIO[R, BRException, Any]): URIO[R, Response] =
+    def ok[R, E <: BRException](effect: => ZIO[R, E, Any]): URIO[R, Response] =
       handleResultEmpty(effect)
 
-    def okWithText[R](effect: => ZIO[R, BRException, String]): URIO[R, Response] =
+    def okWithText[R, E <: BRException](effect: => ZIO[R, E, String]): URIO[R, Response] =
       handleResultText(effect)
 
-    def okWithJsonObject[R, T <: ResponseDTO](effect: => ZIO[R, BRException, T])(implicit encoder: Encoder[T]): URIO[R, Response] =
+    def okWithJsonObject[R, E <: BRException, T <: ResponseDTO](effect: => ZIO[R, E, T])(implicit encoder: Encoder[T]): URIO[R, Response] =
       handleResultObject(effect)
 
     def okWithRequestResponseObject[R, B <: RequestDTO, T <: ResponseDTO](requested: Request)(effect: B => ZIO[R, BRException, T])
-                                                                         (implicit encoderT: Encoder[T], decoder: Decoder[B], encoderB: Encoder[B]): URIO[R, Response] = {
+                                                                         (implicit encoderT: Encoder[T], decoder: JsonReader[B]): URIO[R, Response] = {
       request.parseRequest(requested).foldM(
         e => ZIO.environment[R] zipRight handleRequestError(e),
         b => handleResultObject(effect(b))
@@ -74,20 +75,16 @@ package object api {
 
   object request {
 
-    def parseRequest[A <: RequestDTO](request: Request)(implicit decoder: Decoder[A], encoder: Encoder[A]): ZIO[Any, BRBadRequestException, A] = {
+    import spray.json._
+
+    def parseRequest[A <: RequestDTO](request: Request)(implicit decoder: JsonReader[A]): ZIO[Any, BRBadRequestException, A] = {
       val dto: ZIO[Any, Throwable, A] = for {
-        body <- request.body
-        dto <- ZIO.fromEither(decoder.decodeJson(body.asJson))
+        chunk <- request.body
+        bodyArray <- ZIO.succeed(chunk.toArray)
+        dto <- ZIO.effect(new String(bodyArray).parseJson.convertTo[A])
       } yield dto
       dto.foldM(e => ZIO.fail(new BRBadRequestException(e)), ZIO.succeed(_))
     }
   }
 
 }
-
-//val config: CorsConfig =
-//  CorsConfig(allowedOrigins =
-//      case origin @ Origin.Value(_, host, _) if host == "localhost" => Some(AccessController..Specific(origin))
-//      case _ => None
-//    },
-//  )
